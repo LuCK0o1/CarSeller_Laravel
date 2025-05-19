@@ -1,0 +1,16 @@
+@php
+    $color = 'red';
+    $bgcolor = 'blue';
+@endphp 
+{{-- <x-card color="red" > --}}
+    {{-- OR --}}
+{{-- <x-card :color="$color" > --}}
+    {{-- OR --}}
+{{-- <x-card :$color > //used when only variable name and attribute nam ein component matches. --}}
+<x-card :$color >
+    <x-slot:title>Crad Title 1</x-slot>
+    Card Content 1
+    <x-slot:footer>Crad Footer 1</x-slot>
+</x-card> 
+{{-- This is how you inport components in php file. --}}
+{{-- This is anonymous component. --}}

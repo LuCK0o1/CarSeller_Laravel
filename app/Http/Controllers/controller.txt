@@ -1,0 +1,275 @@
+//imported View from
+//use Illuminate\Support\Facades\View;
+
+return view('home.index' , ['key'=>'value' pass data]);
+//or
+return View::make('home.index'); 
+//using this function provides more functionality
+//But you hard code every view than simple view() function works fine.
+//or
+if (!View::exists('index')){
+    dump("View Does not exists.");
+}
+
+//All operations performed on Car model.
+
+//Select all cars
+$cars = Car::get();
+
+//select published cars
+$cars = Car::where('published_at', '!=',null)->get();
+
+//select the first car
+$cars = Car::where('publlished_at','!=',null)->first(); 
+
+//find with id
+$cars = Car::find(2);
+
+//ordering
+$cars = Car::orderBy('published_at','desc')->get(); 
+
+
+//insert data
+$car = new Car();
+$car->maker_id = 1;
+$car->model_id = 1;
+$car->year = 1999;
+$car->price = 123;
+$car->vin = 123;
+$car->mileage = 12;
+$car->car_type_id = 1;
+$car->fuel_type_id = 1;
+$car->user_id = 1;
+$car->city_id = 1;
+$car->address = 'Lorem ipsom';
+$car->phone = '12344';
+$car->description = null;
+$car->published_at = now();
+$car->deleted_at = null;
+
+$car->save(); 
+
+$car_data = [
+    'maker_id' => 1,
+    'model_id' => 1,
+    'year' => 1999,
+    'price' => 123,
+    'vin' => 123,
+    'mileage' => 12,
+    'car_type_id' => 1,
+    'fuel_type_id' => 1,
+    'user_id' => 1,
+    'city_id' => 1,
+    'address' => 'Loremipsom',
+    'phone' => '12344',
+    'description' => null,
+    'published_at' => now(),
+    'deleted_at' => null,
+];
+
+//approch 1
+$car = Car::create($car_data);
+
+//approch 2
+$car2 = new Car();
+$car2->fill($car_data);
+$car2->save();
+
+//approch 3
+$car3 = new Car($car_data);
+$car3->save();
+
+$cars = Car::get();
+dump($cars);
+
+
+//Update data
+$car = Car::find(1);
+$car->price = 200000;
+$car->save();
+
+//Update or Create data
+Car::updateOrCreate(attributes : [
+    'vin'=>'12345678987654321',
+    'price'=>200000,
+], values : [
+    'price'=>100000,
+]); //Only updates first match with attributes
+//If not any match it will create if value sare not in prper format it will throw an error
+//and it will over write the values with the attributes.
+
+
+//Mass Update
+Car::where('published_at' , null)
+    ->where('user_id' , 1)
+    ->update('published_at'=>now());
+
+//Delete data
+//It is softdelete here like we mentioned in Car model it will populate deleted_at column and stops accessing this data
+$car = Car::find(1);
+$car->delete();
+
+//or
+
+Car::destroy(id : 2);
+
+//or Mass delete
+
+Car::destroy([2,3]);
+
+//or Mass delete
+
+Car::where('published_at' , null)
+    ->where('user_id' , 1)
+    ->delete();
+
+// hard delete all
+
+Car::truncate();
+
+//Chalanges related queries
+
+1://get all cars where price >20000
+Car::where('price','>',20000)->get();
+
+2://get all cars of maker tata
+$tata_id = Maker::where('name' ,'=' , 'tata')->first()->getAttribute('id');
+Car::where('maker_id','=',$tata_id)->get();
+//OR
+$cars = Car::join(table:'makers' ,
+            first:'cars.maker_id',operator:'=',second:'makers.id' , 
+            type:'inner')->get();
+
+3:// Insert new fuel car_type_id
+$ft = new FuelType();
+$ft->name = 'Electric';
+$ft->save();
+
+4:// Update car price with id 1
+$car = Car::find(1);
+$car->price = 15000;
+$car->save();
+
+5:// Delete Cars where year < 2020
+Car::where('year' , '<' , 2020)
+    ->delete();
+
+
+//MODEL RELATIONS
+define relation in model function and after axecutiong function we can get related data
+like Car model has two function features and primaryImage
+
+//One to One relation
+://get data
+    $car = Car::find(1);
+    dd($car->features;)
+    dd($car->primaryIamge;)
+://update data
+    $car->features->abs = 0;
+    $car->save();
+        //or
+    $car->feature->update([arrt]);
+://insert
+    $car_features = [all_attrs];
+    $car->feature()->save($car_features);
+
+//One to Many relation
+://get data
+    $car = Car::find(1);
+    dd($car->images);
+://insert data
+    $image = new CarImage([attr]);
+    $car->images()->save($image);
+        or
+    $car->images()->create([attr]);
+://insert many
+    $car->images()->saveMany([
+        new CarImage([attr]),
+        new CarImage([attr]),
+        new CarImage([attr]),
+        new CarImage([attr]),
+    ]);
+        or
+    $car->images()->createMany([
+        [attr],
+        [attr],
+        [attr],
+        [attr],
+    ]);
+
+//Many to One Realation
+    function return type is Belongsto
+
+//Many to Many relation
+://In User Model
+    public function favouriteCars(): BelongsToMany {
+        return $this->belongsToMany(Car::class , 'favourite_cars' ,'user_id' , 'car_id');
+    }
+://In Car Model
+    public function favouredUsers(): BelongsToMany {
+        return $this->belongsToMany(User::class , 'favourite_cars' ,'car_id' , 'user_id');
+    }
+://insert data
+    $user = User::find(1);
+    $user->favouriteCars()->attach([car_id1,car_id2,...]);
+    --//add more values
+        or
+    $user->favouriteCars()->sync([car_id1,car_id2,...]);
+    --//Deletes old with same user_id and add new ones
+://delete data
+    $user->favouriteCars()->detach([car_id1,car_id2,...]);
+
+    --//delete all
+    $user->favouriteCars()->detach();
+
+
+//Factory
+:// Naming Convention : ✔️ 
+    $maker = Maker::factory()->make();
+    --// laravel given function make() only creates instances of factory.
+    dd($maker);
+    
+    ::// Create
+    $maker = Maker::factory()->create();
+
+    ::// Multi Create
+    $maker = Maker::factory()->count(number)->create();
+
+    ::// state
+    $maker = Maker::factory()->state([optinal data with fixed values])->create();
+
+    ::// sequence
+    $maker = Maker::factory()->count(10)->sequence([[optinal data with fixed values] , ..])->create();
+    -- in loop it will data index 0 to last and repeates again until count does not end.
+
+    ::// CallBack function
+    Maker::factory()->create()->afterCreate(
+        function () {
+            echo "Done";
+        }
+    )
+
+    ::// With relation 
+    --//One to Many
+    Maker::factory()
+        ->count(5)
+        ->hasModels(5 , [optinal data with fixed values]) --Naming conventions applied --Magic method that works has + relational function name
+        ->create()
+    -- now it will create 5 makers and each maker have 5 models in total 25 models.
+
+    --//Many to One
+    Model::factory()
+        ->count(5)
+        ->forMaker([optinal data with fixed values]) --cannot give count here -- Magic method
+        ->create()
+    -- it will create one maker and 5 models under that maker.
+
+    --//Many to Many
+    User::factory()
+        ->has(factory : Car::factory()->count(5) , relation :'favouriteCars')
+        ->create();
+
+:// Naming Convention : ❌
+    $maker = Maker::newFactory()->make();
+    --// constom function
+    dd($maker);
